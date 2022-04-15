@@ -33,7 +33,7 @@ class Node:                     # for the state tree
 
 class Puzzle:
     def __init__(self, size):
-        self.size = size
+        self.size = size                    # number of rows in the puzzle
         self.frontier = []
         self.initial = []
         self.goal = []
@@ -58,21 +58,41 @@ class Puzzle:
 
 
     def get_input(self):
-        name = input("Enter file name: ")
+        #fname = input("Enter file name: ")
+        #print(fname)
         lines = []
-        with open(name) as file:
+        
+        with open("Sample_Input.txt", 'r') as file:
             lines = file.readlines()
         file.close()
 
         line_num = 0
         for line in lines:
-            if 1 <= line_num <=3:
-                self.initial.append(line)
+            curr_line = line.strip().split(" ")
 
-            elif 5 <= line_num <=7:
-                self.goal.append(line)
+            if line_num <=2:
+                self.initial.append(curr_line)
+            elif 4 <= line_num <=7:
+                self.goal.append(curr_line)
 
             line_num += 1
 
+        # print(self.initial)
+        # print(self.goal)
+
+    
+
+
+
+
+
+
+
+def main():
+    puzzle = Puzzle(3)
+    puzzle.get_input()
+
+
+main()
 
 
