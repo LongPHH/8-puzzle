@@ -41,18 +41,51 @@ class Puzzle:
 
 
     
-    def h1(self,start,goal):     # h-score for manhattan distance
+    def h1(self,start):     # h-score for manhattan distance
         man_dist = 0
         for i in range(9):
             x1,y1 = find_pos(start,str(i))          # str
-            x2,y2 = find_pos(goal, str(i))
+            x2,y2 = find_pos(self.goal, str(i))
             man_dist += abs(x1-x2) + abs(y1-y2)
         return man_dist
 
-    def h2(self):               # h-score for nilsson Sequence
-        pass
+    def h2(self, start):               # h-score for nilsson Sequence
+        goal_path = []
+        for i in self.goal[0]:
+            goal_path.append(i)
+        for i in range(1, 3):
+            goal_path.append(self.goal[i][2])
+        goal_path.append(self.goal[2][1])
+        goal_path.append(self.goal[2][0])
+        goal_path.append(self.goal[1][0])
 
-    def f_score(self,start,goal):
+        current_path = []
+        for i in start[0]:
+            current_path.append(i)
+        for i in range(1, 3):
+            current_path.append(start[i][2])
+        current_path.append(start[2][1])
+        current_path.append(start[2][0])
+        current_path.append(start[1][0])
+
+        score = 0
+        for i in range(len(current_path)):
+            try:
+                if current_path[i+1] != goal_path[(goal_path.index(current_path[i])+ 1) % len(goal_path)]:
+                    score = score + 2
+            except:
+                pass
+        
+        if start[1][1] != self.goal[1][1]:
+            score = score + 1
+
+        p = self.h1(start)
+
+        score = p + 3 * score
+
+        return score
+
+    def f_score(self,start):
         # heuristic function f(n) = h(n) + g(n)
         pass
 
@@ -91,6 +124,8 @@ class Puzzle:
 def main():
     puzzle = Puzzle(3)
     puzzle.get_input()
+    print("H1 score: ", puzzle.h1(puzzle.initial))
+    print("H2 score: ", puzzle.h2(puzzle.initial))
 
 
 main()
