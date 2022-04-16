@@ -9,7 +9,7 @@ def find_pos(lst,num):
                 return i,j
 
 
-class Node:                     # for the state tree
+class Node:                             # for the state tree
     def __init__(self,data,level,f_score,curr_move):
         self.data = data                # board content of each node. ex: [['0','1','2'],['3','4','5'],['6','7','8']]
         self.level = level              # current level of node in the state tree
@@ -24,12 +24,15 @@ class Node:                     # for the state tree
 
         pass
 
-    def move_tile(self):                # move the empty tiles up down left or right
-        pass
+    def move_tile(self,board,x1,y1,x2,y2):                # move the empty tiles up down left or right
+        # move the empty tile according to the direction from x-y coord
+        if 0 <= x2 <= len(self.data) and 0 <= y2 < len(self.data[0]):       # check if new coord is within border of board
+            new = []
+            new = deepcopy(self.data)       # copy current board to new
+            new[x1][y1], new[x2][y2] = new[x2][y2], new[x1][y1]
+            return new
 
-    def copy(self):
-        pass
-
+        return None    
 
 class Puzzle:
     def __init__(self, size):
@@ -37,11 +40,11 @@ class Puzzle:
         self.frontier = []
         self.initial = []
         self.goal = []
-        self.reached = {}           # dictionary containing reached state. key = state, value = node
+        self.reached = {}                   # dictionary containing reached state. key = state, value = node
 
 
     
-    def h1(self,start):     # h-score for manhattan distance
+    def h1(self,start):                     # h-score for manhattan distance
         man_dist = 0
         for i in range(9):
             x1,y1 = find_pos(start,str(i))          # str
@@ -49,8 +52,8 @@ class Puzzle:
             man_dist += abs(x1-x2) + abs(y1-y2)
         return man_dist
 
-    def h2(self, start):               # h-score for nilsson Sequence
-        goal_path = []
+    def h2(self, start):                # h-score for nilsson Sequence
+        goal_path = []                  # order of the border of goal state in clockwise direction
         for i in self.goal[0]:
             goal_path.append(i)
         for i in range(1, 3):
@@ -59,7 +62,7 @@ class Puzzle:
         goal_path.append(self.goal[2][0])
         goal_path.append(self.goal[1][0])
 
-        current_path = []
+        current_path = []               # order of the border of current state in clockwise direction
         for i in start[0]:
             current_path.append(i)
         for i in range(1, 3):
@@ -69,16 +72,19 @@ class Puzzle:
         current_path.append(start[1][0])
 
         score = 0
+        # iterating thru current path
         for i in range(len(current_path)):
             try:
+                # is the next node in current path is not the same as the node in the goal path using that formula
                 if current_path[i+1] != goal_path[(goal_path.index(current_path[i])+ 1) % len(goal_path)]:
                     score = score + 2
             except:
                 pass
         
-        if start[1][1] != self.goal[1][1]:
+        if start[1][1] != self.goal[1][1]:      # if center node of initial and goal state not the same, add 1
             score = score + 1
 
+        # manhattan distance
         p = self.h1(start)
 
         score = p + 3 * score
