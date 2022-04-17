@@ -172,6 +172,8 @@ class Puzzle:
 
     def finish(self, node):
         print("done")
+        self.print(node)
+        quit()
 
     def print(self, state):
         print("F Score", state.f_score)
