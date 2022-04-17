@@ -5,6 +5,9 @@ from itsdangerous import NoneAlgorithm
 
 from pyrfc3339 import generate
 
+# import sys
+# sys.setrecursionlimit(2000)
+
 # find index of a number in current state
 def find_pos(lst,num):
     for i in range(len(lst)):
@@ -116,32 +119,34 @@ class Puzzle:
     def generate_node(self, state):            # generate child nodes from moving empty tiles in four directions
         children = []                   
         x,y = find_pos(state.data, '0')
-        blank_coords = [((x,y-1), 'D'),((x,y+1), 'U'),((x-1,y), 'L'),((x+1,y), 'R')]        # possible moves for the blank tile. (U,D,L,R)
+        blank_coords = [((x,y-1), 'L'),((x,y+1), 'R'),((x-1,y), 'U'),((x+1,y), 'D')]        # possible moves for the blank tile. (U,D,L,R)
         for i in blank_coords:
             node = self.move_tile(state, x, y, i[0][0], i[0][1], i[1])
             if node == None:
                 continue
             if str(node.data) in self.reached.keys():
-                pass
-            elif node in self.frontier.keys():
-                if node.f_score < self.frontier[node]:
-                    self.frontier[str(node.data)] = (node.f_score, node)
-                else:
-                    self.reached[str(node.data)] = (node.f_score, node)
+                self.count = self.count + 1
+            # elif str(node.data) in self.frontier.keys():
+            #     if node.f_score < self.frontier[str(node.data)][0]:
+            #         self.frontier[str(node.data)] = (node.f_score, node)
             elif str(node.data) == str(self.goal):
+                self.count = self.count + 1
                 self.finish(node)
             else:
+                self.count = self.count + 1
                 self.frontier[str(node.data)] = (node.f_score, node)
 
         self.reached[str(state.data)] = (state.f_score, state)
 
         del self.frontier[str(state.data)]
-        self.count = self.count + 1
-        if self.count < 500:
-            self.print(state)
-        else:
-            quit()
-        self.generate_node(self.find_min())
+
+        # if self.count < 50000:
+        #     print(self.count)
+        #     self.print(state)
+        # else:
+        #     print("RECURSIVE DEPTH REACHED")
+        #     quit()
+        
 
         pass
 
@@ -158,8 +163,9 @@ class Puzzle:
 
     def solve(self):
         node = Node(self.initial, 0, self.f_score(self.initial, 0))
-        self.frontier[str(node.data)] = node.f_score
-        self.generate_node(node)
+        self.frontier[str(node.data)] = (node.f_score,node)
+        while True:
+            self.generate_node(self.find_min())
 
     def find_min(self):
         min = float('INF')
@@ -172,8 +178,22 @@ class Puzzle:
 
     def finish(self, node):
         print("done")
+        print(self.count)
         self.print(node)
+
+        temp_node = node
+        moves = []
+        f_scores = []
+        while temp_node != None:
+
+            moves.append(temp_node.move)
+            f_scores.append(temp_node.f_score)
+            temp_node = temp_node.parent
+        print(f_scores)
+        print(moves)
+
         quit()
+
 
     def print(self, state):
         print("F Score", state.f_score)
@@ -199,7 +219,7 @@ class Puzzle:
 
 
 def main():
-    puzzle = Puzzle()
+    puzzle = Puzzle(h='man')
     puzzle.get_input()
     puzzle.solve()
 
