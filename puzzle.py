@@ -1,5 +1,9 @@
+from logging import raiseExceptions
 import math
 from copy import deepcopy
+from itsdangerous import NoneAlgorithm
+
+from pyrfc3339 import generate
 
 # find index of a number in current state
 def find_pos(lst,num):
@@ -10,37 +14,22 @@ def find_pos(lst,num):
 
 
 class Node:                             # for the state tree
-    def __init__(self,data,level,f_score,curr_move):
+    def __init__(self,data,level,f_score,curr_move=None, parent=None):
         self.data = data                # board content of each node. ex: [['0','1','2'],['3','4','5'],['6','7','8']]
         self.level = level              # current level of node in the state tree
         self.f_score = f_score          # calculated fscore
         self.move = curr_move           # how did the empty tile move (U,R,L,D) 
+        self.parent = parent
 
-
-    def generate_node(self):            # generate child node from moving empty tiles in four directions
-        children = []                   
-        x,y = find_pos(self.data, '0')
-        blank_coords = [(x,y-1),(x,y+1),(x-1,y),(x+1,y)]        # possible moves for the blank tile. (U,D,L,R)
-
-        pass
-
-    def move_tile(self,board,x1,y1,x2,y2):                # move the empty tiles up down left or right
-        # move the empty tile according to the direction from x-y coord
-        if 0 <= x2 <= len(self.data) and 0 <= y2 < len(self.data[0]):       # check if new coord is within border of board
-            new = []
-            new = deepcopy(self.data)       # copy current board to new
-            new[x1][y1], new[x2][y2] = new[x2][y2], new[x1][y1]
-            return new
-
-        return None    
 
 class Puzzle:
-    def __init__(self, size):
-        self.size = size                    # number of rows in the puzzle
-        self.frontier = []
+    def __init__(self, h='man'):
+        self.frontier = {}
         self.initial = []
         self.goal = []
+        self.h = h
         self.reached = {}                   # dictionary containing reached state. key = state, value = node
+        self.count = 0
 
 
     
@@ -91,9 +80,14 @@ class Puzzle:
 
         return score
 
-    def f_score(self,start):
+    def f_score(self,start, level):
         # heuristic function f(n) = h(n) + g(n)
-        pass
+        if self.h == 'man':
+            return level + self.h1(start)
+        elif self.h == 'nel':
+            return level + self.h2(start)
+        else:
+            print("ERROR")
 
 
     def get_input(self):
@@ -119,6 +113,81 @@ class Puzzle:
         # print(self.initial)
         # print(self.goal)
 
+    def generate_node(self, state):            # generate child nodes from moving empty tiles in four directions
+        children = []                   
+        x,y = find_pos(state.data, '0')
+        blank_coords = [((x,y-1), 'D'),((x,y+1), 'U'),((x-1,y), 'L'),((x+1,y), 'R')]        # possible moves for the blank tile. (U,D,L,R)
+        for i in blank_coords:
+            node = self.move_tile(state, x, y, i[0][0], i[0][1], i[1])
+            if node == None:
+                continue
+            if str(node.data) in self.reached.keys():
+                pass
+            elif node in self.frontier.keys():
+                if node.f_score < self.frontier[node]:
+                    self.frontier[str(node.data)] = (node.f_score, node)
+                else:
+                    self.reached[str(node.data)] = (node.f_score, node)
+            elif str(node.data) == str(self.goal):
+                self.finish(node)
+            else:
+                self.frontier[str(node.data)] = (node.f_score, node)
+
+        self.reached[str(state.data)] = (state.f_score, state)
+
+        del self.frontier[str(state.data)]
+        self.count = self.count + 1
+        if self.count < 500:
+            self.print(state)
+        else:
+            quit()
+        self.generate_node(self.find_min())
+
+        pass
+
+    def move_tile(self,board,x1,y1,x2,y2, move):                # move the empty tiles up down left or right
+        # move the empty tile according to the direction from x-y coord
+        if 0 <= x2 < len(board.data) and 0 <= y2 < len(board.data[0]):       # check if new coord is within border of board
+            new = []
+            new = deepcopy(board.data)       # copy current board to new
+            new[x1][y1], new[x2][y2] = new[x2][y2], new[x1][y1]
+
+            return Node(new, board.level + 1, self.f_score(new, board.level + 1), move, board)
+
+        return None    
+
+    def solve(self):
+        node = Node(self.initial, 0, self.f_score(self.initial, 0))
+        self.frontier[str(node.data)] = node.f_score
+        self.generate_node(node)
+
+    def find_min(self):
+        min = float('INF')
+        for i in self.frontier.keys():
+            if self.frontier[i][0] < min:
+                min = self.frontier[i][0]
+                node = self.frontier[i][1]
+
+        return node
+
+    def finish(self, node):
+        print("done")
+
+    def print(self, state):
+        print("F Score", state.f_score)
+        print(state.data[0])
+        print(state.data[1])
+        print(state.data[2])
+        print()
+        print('--------------------------')
+        print()
+
+
+    
+
+
+
+
     
 
 
@@ -128,10 +197,9 @@ class Puzzle:
 
 
 def main():
-    puzzle = Puzzle(3)
+    puzzle = Puzzle()
     puzzle.get_input()
-    print("H1 score: ", puzzle.h1(puzzle.initial))
-    print("H2 score: ", puzzle.h2(puzzle.initial))
+    puzzle.solve()
 
 
 main()
