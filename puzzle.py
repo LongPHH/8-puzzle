@@ -10,29 +10,38 @@ def find_pos(lst,num):
 
 
 class Node:                             # for the state tree
-    def __init__(self,data,level,f_score,curr_move):
+    def __init__(self,data,level,f_score,curr_move=None, parent=None):
         self.data = data                # board content of each node. ex: [['0','1','2'],['3','4','5'],['6','7','8']]
         self.level = level              # current level of node in the state tree
         self.f_score = f_score          # calculated fscore
         self.move = curr_move           # how did the empty tile move (U,R,L,D) 
+        self.parent = parent
 
 
     def generate_node(self):            # generate child node from moving empty tiles in four directions
         children = []                   
         x,y = find_pos(self.data, '0')
-        blank_coords = [(x,y-1),(x,y+1),(x-1,y),(x+1,y)]        # possible moves for the blank tile. (U,D,L,R)
+        blank_coords = [((x,y-1),"U"),((x,y+1),'D'),((x-1,y),'L'),((x+1,y),"D")]        # possible moves for the blank tile. (U,D,L,R)
+        for direction in blank_coords:
+            child = self.move_tile(self.data,x,y,direction[0][0],direction[0][1])
+            if child is not None:
+                child_node = Node(child,self.level+1,0,direction[1],self)
+                children.append(child_node)
 
-        pass
+        return children
+
 
     def move_tile(self,board,x1,y1,x2,y2):                # move the empty tiles up down left or right
         # move the empty tile according to the direction from x-y coord
-        if 0 <= x2 <= len(self.data) and 0 <= y2 < len(self.data[0]):       # check if new coord is within border of board
+        if 0 <= x2 < len(self.data) and 0 <= y2 < len(self.data[0]):       # check if new coord is within border of board
             new = []
             new = deepcopy(self.data)       # copy current board to new
             new[x1][y1], new[x2][y2] = new[x2][y2], new[x1][y1]
             return new
 
         return None    
+
+    
 
 class Puzzle:
     def __init__(self, size):
@@ -119,6 +128,13 @@ class Puzzle:
         # print(self.initial)
         # print(self.goal)
 
+    def node_test(self):
+        curr = Node(self.initial,0,0)
+        children = curr.generate_node()
+        print (self.initial)
+        print( "---------------------------------")
+        for child in children:
+            print(child.data)
     
 
 
@@ -130,8 +146,9 @@ class Puzzle:
 def main():
     puzzle = Puzzle(3)
     puzzle.get_input()
-    print("H1 score: ", puzzle.h1(puzzle.initial))
-    print("H2 score: ", puzzle.h2(puzzle.initial))
+    # print("H1 score: ", puzzle.h1(puzzle.initial))
+    # print("H2 score: ", puzzle.h2(puzzle.initial))
+    puzzle.node_test()
 
 
 main()
