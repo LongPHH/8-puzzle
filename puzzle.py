@@ -142,6 +142,7 @@ class Puzzle:
             elif str(node.data) == str(self.goal):                  # goal reached
                 self.finish(node)
                 flag = False
+                break
             
             else:                                                   # add to reached
                 self.count = self.count + 1
@@ -246,8 +247,8 @@ def main():
 
     print("DOENEEEE")
 
-    # puzzle2 = Puzzle(file_name, "nil")
-    # puzzle2.solve()
+    puzzle2 = Puzzle(file_name, "nil")
+    puzzle2.solve()
 
 
 main()
