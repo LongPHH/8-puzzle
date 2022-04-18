@@ -36,7 +36,7 @@ class Puzzle:
     
     def h1(self,start):                     # h-score for manhattan distance
         man_dist = 0
-        for i in range(9):
+        for i in range(1,9):
             x1,y1 = find_pos(start,str(i))          # str
             x2,y2 = find_pos(self.goal, str(i))
             man_dist += abs(x1-x2) + abs(y1-y2)
