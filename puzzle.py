@@ -1,12 +1,12 @@
+from asyncore import write
 from logging import raiseExceptions
 import math
 from copy import deepcopy
-from itsdangerous import NoneAlgorithm
+#from itsdangerous import NoneAlgorithm
 
-from pyrfc3339 import generate
+#from pyrfc3339 import generate
 
-# import sys
-# sys.setrecursionlimit(2000)
+
 
 # find index of a number in current state
 def find_pos(lst,num):
@@ -33,6 +33,8 @@ class Puzzle:
         self.h = h
         self.reached = {}                   # dictionary containing reached state. key = state, value = node
         self.count = 0
+        self.move_lst = []
+        self.f_scores = []
 
 
     
@@ -43,6 +45,7 @@ class Puzzle:
             x2,y2 = find_pos(self.goal, str(i))
             man_dist += abs(x1-x2) + abs(y1-y2)
         return man_dist
+
 
     def h2(self, start):                # h-score for nilsson Sequence
         goal_path = []                  # order of the border of goal state in clockwise direction
@@ -94,11 +97,11 @@ class Puzzle:
 
 
     def get_input(self):
-        #fname = input("Enter file name: ")
-        #print(fname)
+        fname = input("Enter file name: ")
+        print(fname)
         lines = []
         
-        with open("Sample_Input.txt", 'r') as file:
+        with open(fname, 'r') as file:
             lines = file.readlines()
         file.close()
 
@@ -113,8 +116,7 @@ class Puzzle:
 
             line_num += 1
 
-        # print(self.initial)
-        # print(self.goal)
+        
 
     def generate_node(self, state):            # generate child nodes from moving empty tiles in four directions
         children = []                   
@@ -124,15 +126,14 @@ class Puzzle:
             node = self.move_tile(state, x, y, i[0][0], i[0][1], i[1])
             if node == None:
                 continue
-            if str(node.data) in self.reached.keys():
+
+            if str(node.data) in self.reached.keys():               # found repeated state, delete it.
                 self.count = self.count + 1
-            # elif str(node.data) in self.frontier.keys():
-            #     if node.f_score < self.frontier[str(node.data)][0]:
-            #         self.frontier[str(node.data)] = (node.f_score, node)
-            elif str(node.data) == str(self.goal):
-                self.count = self.count + 1
+                del node
+            elif str(node.data) == str(self.goal):                  # goal reached
                 self.finish(node)
-            else:
+                
+            else:                                                   # add to reached
                 self.count = self.count + 1
                 self.frontier[str(node.data)] = (node.f_score, node)
 
@@ -140,32 +141,26 @@ class Puzzle:
 
         del self.frontier[str(state.data)]
 
-        # if self.count < 50000:
-        #     print(self.count)
-        #     self.print(state)
-        # else:
-        #     print("RECURSIVE DEPTH REACHED")
-        #     quit()
-        
 
-        pass
-
-    def move_tile(self,board,x1,y1,x2,y2, move):                # move the empty tiles up down left or right
+    def move_tile(self,board,x1,y1,x2,y2, move):                                # move the empty tiles up down left or right
         # move the empty tile according to the direction from x-y coord
-        if 0 <= x2 < len(board.data) and 0 <= y2 < len(board.data[0]):       # check if new coord is within border of board
+        if 0 <= x2 < len(board.data) and 0 <= y2 < len(board.data[0]):          # check if new coord is within border of board
             new = []
-            new = deepcopy(board.data)       # copy current board to new
-            new[x1][y1], new[x2][y2] = new[x2][y2], new[x1][y1]
+            new = deepcopy(board.data)                                          # copy current board to new
+            new[x1][y1], new[x2][y2] = new[x2][y2], new[x1][y1]                 # move 0
+            fscore = self.f_score(new, board.level + 1)                             
 
-            return Node(new, board.level + 1, self.f_score(new, board.level + 1), move, board)
+            return Node(new, board.level + 1, fscore, move, board)
 
         return None    
 
     def solve(self):
-        node = Node(self.initial, 0, self.f_score(self.initial, 0))
+        node = Node(self.initial, 0, self.f_score(self.initial, 0))             # initial state
         self.frontier[str(node.data)] = (node.f_score,node)
         while True:
             self.generate_node(self.find_min())
+
+        
 
     def find_min(self):
         min = float('INF')
@@ -176,23 +171,50 @@ class Puzzle:
 
         return node
 
-    def finish(self, node):
+    def finish(self, node):                         # trace solution path to get move list and f-score, write to file
         print("done")
         print(self.count)
-        self.print(node)
+        #self.print(node)
 
         temp_node = node
-        moves = []
-        f_scores = []
+        
         while temp_node != None:
-
-            moves.append(temp_node.move)
-            f_scores.append(temp_node.f_score)
+            #self.print(temp_node)
+            self.move_lst.append(temp_node.move)
+            self.f_scores.append(temp_node.f_score)
             temp_node = temp_node.parent
-        print(f_scores)
-        print(moves)
-
+       
+        self.write_output(node)
         quit()
+
+
+    def write_output(self,goal_node):
+        fname = input("Enter output file name: ")
+        file = open(fname,'w')
+
+        # initial goal
+        for i in self.initial:
+            for j in i:
+                file.write("%s " % j)
+            file.write("\n")
+        file.write("\n")
+
+        #print goal state
+        for i in self.goal:
+            for j in i:
+                file.write("%s " % j)
+            file.write("\n")
+        file.write("\n")
+
+        #print results
+        file.write("%s\n" % goal_node.level)
+        file.write("%s\n" % self.count)
+        for i in range(len(self.move_lst) - 2, -1, -1):
+            file.write("%s " % self.move_lst[i])
+        file.write("\n")
+        for i in self.f_scores:
+            file.write("%s " % i)
+        file.write("\n")
 
 
     def print(self, state):
@@ -222,8 +244,16 @@ def main():
     puzzle = Puzzle(h='man')
     puzzle.get_input()
     puzzle.solve()
+    puzzle.write_output()
 
 
 main()
 
 
+
+
+
+
+[1,2,3]
+[1,2,3]
+[1,2,3]
