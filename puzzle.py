@@ -1,6 +1,4 @@
-from asyncore import write
 from logging import raiseExceptions
-import math
 from copy import deepcopy
 
 # find index of a number in current state
@@ -37,7 +35,7 @@ class Puzzle:
     def h1(self,start):                     # h-score for manhattan distance
         man_dist = 0
         for i in range(1,9):
-            x1,y1 = find_pos(start,str(i))          # str
+            x1,y1 = find_pos(start,str(i))          
             x2,y2 = find_pos(self.goal, str(i))
             man_dist += abs(x1-x2) + abs(y1-y2)
         return man_dist
@@ -67,9 +65,8 @@ class Puzzle:
         for i in range(len(current_path)):
             try:
                 # is the next node in current path is not the same as the node in the goal path using that formula
-                if current_path[i+1] != 0:
-                    if current_path[i+1] != goal_path[(goal_path.index(current_path[i])+ 1) % len(goal_path)]:
-                        score = score + 2
+                if current_path[i+1] != goal_path[(goal_path.index(current_path[i])+ 1) % len(goal_path)]:
+                    score = score + 2
             except:
                 pass
         
@@ -112,8 +109,6 @@ class Puzzle:
 
             line_num += 1
         
-        print(self.initial)
-        print(self.goal)
 
     # to get the node with lowest fvalue in frontier. sorting not needed
     def find_min(self):
@@ -134,24 +129,20 @@ class Puzzle:
             node = self.move_tile(state, x, y, i[0][0], i[0][1], i[1])
             if node == None:
                 continue
-
             if str(node.data) in self.reached.keys():               # found repeated state, delete it.
                 self.count = self.count + 1
                 del node
-                flag = True
-                     
+                flag = True        
             elif str(node.data) == str(self.goal):                  # goal reached
                 self.finish(node)
                 flag = False
                 break
-            
             else:                                                   # add to reached
                 self.count = self.count + 1
                 self.frontier[str(node.data)] = (node.f_score, node)
                 flag = True
                 
         self.reached[str(state.data)] = (state.f_score, state)
-
         del self.frontier[str(state.data)]
         return flag
 
@@ -163,18 +154,15 @@ class Puzzle:
             new = deepcopy(board.data)                                          # copy current board to new
             new[x1][y1], new[x2][y2] = new[x2][y2], new[x1][y1]                 # move 0
             fscore = self.f_score(new, board.level + 1)                             
-
             return Node(new, board.level + 1, fscore, move, board)
 
         return None    
 
     # main solver method
     def solve(self):
-
         self.get_input()
         node = Node(self.initial, 0, self.f_score(self.initial, 0))             # initial state
         self.frontier[str(node.data)] = (node.f_score,node)
-
         flag = True
         
         while flag:
@@ -185,19 +173,14 @@ class Puzzle:
     # trace solution path to get move list and f-score, write to file
     def finish(self, node):                         
         temp_node = node
-        # self.print(node)
-        
-        while temp_node != None:
-            #self.print(temp_node)
+     
+        while temp_node != None:    
             self.move_lst.append(temp_node.move)
             self.f_scores.append(temp_node.f_score)
             temp_node = temp_node.parent
        
-        # print(self.move_lst)
-        # print(self.f_scores)
         self.write_output(node.level)
-        print("HERE")
-
+        
     # function to write output file
     def write_output(self,goal_level):                   
         fname = input("Enter output file name: ")
@@ -227,8 +210,6 @@ class Puzzle:
             file.write("%s " % i)
         file.write("\n")
 
-        
-
 
     def print(self, state):                     # for debugging 
         print("F Score", state.f_score)
@@ -243,11 +224,11 @@ class Puzzle:
 def main():
     file_name = input("Enter File Name: ")
 
+    print("Solving using Manhattan distance as heuristic")
     puzzle1 = Puzzle(file_name ,'man')
     puzzle1.solve()
 
-    print("DOENEEEE")
-
+    print("Solving using Nilsson Sequence as heuristic")
     puzzle2 = Puzzle(file_name, "nil")
     puzzle2.solve()
 
