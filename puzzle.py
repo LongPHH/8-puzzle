@@ -65,8 +65,9 @@ class Puzzle:
         for i in range(len(current_path)):
             try:
                 # is the next node in current path is not the same as the node in the goal path using that formula
-                if current_path[i+1] != goal_path[(goal_path.index(current_path[i])+ 1) % len(goal_path)]:
-                    score = score + 2
+                if current_path[i+1] != 0:
+                    if current_path[i+1] != goal_path[(goal_path.index(current_path[i])+ 1) % len(goal_path)]:
+                        score = score + 2
             except:
                 pass
         
